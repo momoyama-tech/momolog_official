@@ -348,7 +348,7 @@ import { onMount } from 'svelte';
     min-height: 100vh;
     padding: 24px 14px 80px;
     overflow: hidden;
-    background: linear-gradient(150deg, #111722 0%, #1a2436 54%, #111926 100%);
+    background: #6b112d;
   }
 
   .ambient {
