@@ -39,6 +39,7 @@ import { onMount } from 'svelte';
   let loading = true;
   let error = '';
   let debugInfo = '';
+  const allGroupsOptionId = '__all__';
   let selectedGroupId = '';
   let currentPage = 1;
   const videosPerPage = 10;
@@ -127,13 +128,19 @@ import { onMount } from 'svelte';
     return sections;
   })();
 
-  $: if (groupSections.length > 0 && !groupSections.some((section) => section.group.id === selectedGroupId)) {
-    selectedGroupId = groupSections[0].group.id;
+  $: if (
+    groupSections.length > 0 &&
+    selectedGroupId !== allGroupsOptionId &&
+    !groupSections.some((section) => section.group.id === selectedGroupId)
+  ) {
+    selectedGroupId = allGroupsOptionId;
   }
 
   $: selectedGroupSection = groupSections.find((section) => section.group.id === selectedGroupId);
+  $: currentGroupSection = selectedGroupSection ?? groupSections[0];
+  $: selectedVideosBase = selectedGroupId === allGroupsOptionId ? videos : (selectedGroupSection?.videos ?? []);
   $: sortedSelectedVideos = (() => {
-    const allVideos = [...(selectedGroupSection?.videos ?? [])];
+    const allVideos = [...selectedVideosBase];
     if (sortOrder === 'newest') {
       return allVideos.sort(sortVideos);
     }
@@ -290,6 +297,7 @@ import { onMount } from 'svelte';
                   currentPage = 1;
                 }}
               >
+                <option value={allGroupsOptionId}>すべての動画</option>
                 {#each groupSections as section (section.group.id)}
                   <option value={section.group.id}>{section.group.name || fallbackGroupName}</option>
                 {/each}
@@ -310,35 +318,51 @@ import { onMount } from 'svelte';
             </div>
           </div>
 
-          {#if selectedGroupSection}
+          {#if selectedGroupId === allGroupsOptionId || currentGroupSection}
             <section class="group-block" role="tabpanel">
               <header class="group-head">
                 <div>
-                  <h2>{selectedGroupSection.group.name || fallbackGroupName}</h2>
-                  <p class="group-description">{selectedGroupSection.group.description || '団体説明は未設定です。'}</p>
+                  <h2>
+                    {#if selectedGroupId === allGroupsOptionId}
+                      すべての動画
+                    {:else}
+                      {currentGroupSection.group.name || fallbackGroupName}
+                    {/if}
+                  </h2>
+                  <p class="group-description">
+                    {#if selectedGroupId === allGroupsOptionId}
+                      公開中の全動画を一覧表示しています。
+                    {:else}
+                      {currentGroupSection.group.description || '団体説明は未設定です。'}
+                    {/if}
+                  </p>
                 </div>
                 <div class="group-meta">
-                  <p class="group-id">ID: {selectedGroupSection.group.id}</p>
-                  <p class="channel-line">
-                    {#if selectedGroupSection.group.youtube.channelId}
-                      <a href={`https://www.youtube.com/channel/${selectedGroupSection.group.youtube.channelId}`} target="_blank" rel="noreferrer">
-                        {selectedGroupSection.group.youtube.channelTitle || 'YouTubeチャンネル'}
-                      </a>
-                    {:else if selectedGroupSection.videos[0]?.youtubeChannelId}
-                      <a href={`https://www.youtube.com/channel/${selectedGroupSection.videos[0].youtubeChannelId}`} target="_blank" rel="noreferrer">
-                        {selectedGroupSection.videos[0].youtubeChannelTitle || 'YouTubeチャンネル'}
-                      </a>
-                    {:else}
-                      YouTubeチャンネル未連携
-                    {/if}
-                    <span class="chip" data-connected={selectedGroupSection.group.youtube.connected ? 'true' : 'false'}>
-                      {selectedGroupSection.group.youtube.connected ? 'connected' : 'not connected'}
-                    </span>
-                  </p>
+                  {#if selectedGroupId === allGroupsOptionId}
+                    <p class="group-id">公開動画: {videos.length}件</p>
+                  {:else}
+                    <p class="group-id">ID: {currentGroupSection.group.id}</p>
+                    <p class="channel-line">
+                      {#if currentGroupSection.group.youtube.channelId}
+                        <a href={`https://www.youtube.com/channel/${currentGroupSection.group.youtube.channelId}`} target="_blank" rel="noreferrer">
+                          {currentGroupSection.group.youtube.channelTitle || 'YouTubeチャンネル'}
+                        </a>
+                      {:else if currentGroupSection.videos[0]?.youtubeChannelId}
+                        <a href={`https://www.youtube.com/channel/${currentGroupSection.videos[0].youtubeChannelId}`} target="_blank" rel="noreferrer">
+                          {currentGroupSection.videos[0].youtubeChannelTitle || 'YouTubeチャンネル'}
+                        </a>
+                      {:else}
+                        YouTubeチャンネル未連携
+                      {/if}
+                      <span class="chip" data-connected={currentGroupSection.group.youtube.connected ? 'true' : 'false'}>
+                        {currentGroupSection.group.youtube.connected ? 'connected' : 'not connected'}
+                      </span>
+                    </p>
+                  {/if}
                 </div>
               </header>
 
-              {#if selectedGroupSection.videos.length === 0}
+              {#if sortedSelectedVideos.length === 0}
                 <p class="empty">公開中の動画はありません。</p>
               {:else}
                 <ul class="video-feed">
@@ -364,7 +388,14 @@ import { onMount } from 'svelte';
                         <p class="video-label">Campus Movie</p>
                         <h3>{video.title || 'タイトル未設定'}</h3>
                         <p class="video-meta">
-                          <span>{video.youtubeChannelTitle || selectedGroupSection.group.name || 'チャンネル未設定'}</span>
+                          <span>
+                            {#if selectedGroupId === allGroupsOptionId}
+                              {video.groupName || '団体名未設定'}
+                            {:else}
+                              {currentGroupSection.group.name || '団体名未設定'}
+                            {/if}
+                          </span>
+                          <span>{video.youtubeChannelTitle || 'チャンネル未設定'}</span>
                           <span>{formatVideoDate(video.createdAt)}</span>
                         </p>
                         <p class="video-description">{video.description || '動画説明は未設定です。'}</p>
