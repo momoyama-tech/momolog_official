@@ -349,6 +349,8 @@ import { onMount } from 'svelte';
     padding: 24px 14px 80px;
     overflow: hidden;
     background: linear-gradient(150deg, #111722 0%, #1a2436 54%, #111926 100%);
+    display: flex;
+    justify-content: center;
   }
 
   .ambient {
@@ -384,14 +386,14 @@ import { onMount } from 'svelte';
 
   .container {
     --ui-scale: 0.65;
+    width: 100%;
     max-width: 1260px;
     margin: 0 auto;
     position: relative;
     z-index: 1;
     transform: scale(var(--ui-scale));
     transform-origin: top center;
-    width: calc(100% / var(--ui-scale));
-    max-width: calc(1260px / var(--ui-scale));
+    flex: 0 0 auto;
   }
 
   .hero {
