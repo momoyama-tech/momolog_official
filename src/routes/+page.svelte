@@ -39,6 +39,10 @@ import { onMount } from 'svelte';
   let loading = true;
   let error = '';
   let debugInfo = '';
+  let selectedGroupId = '';
+  let currentPage = 1;
+  const videosPerPage = 10;
+  let sortOrder: 'newest' | 'oldest' = 'newest';
 
   const fallbackGroupName = '未登録団体';
 
@@ -121,6 +125,25 @@ import { onMount } from 'svelte';
       }));
 
     return sections;
+  })();
+
+  $: if (groupSections.length > 0 && !groupSections.some((section) => section.group.id === selectedGroupId)) {
+    selectedGroupId = groupSections[0].group.id;
+  }
+
+  $: selectedGroupSection = groupSections.find((section) => section.group.id === selectedGroupId);
+  $: sortedSelectedVideos = (() => {
+    const allVideos = [...(selectedGroupSection?.videos ?? [])];
+    if (sortOrder === 'newest') {
+      return allVideos.sort(sortVideos);
+    }
+    return allVideos.sort((a, b) => sortVideos(b, a));
+  })();
+  $: totalPages = Math.max(1, Math.ceil(sortedSelectedVideos.length / videosPerPage));
+  $: if (currentPage > totalPages) currentPage = totalPages;
+  $: paginatedVideos = (() => {
+    const start = (currentPage - 1) * videosPerPage;
+    return sortedSelectedVideos.slice(start, start + videosPerPage);
   })();
 
   onMount(() => {
@@ -257,39 +280,69 @@ import { onMount } from 'svelte';
         <p class="notice">現在、公開中の団体・動画はありません。（groups: {groups.length} / videos: {videos.length}）</p>
       {:else}
         <div class="group-stack">
-          {#each groupSections as section (section.group.id)}
-            <section class="group-block">
+          <div class="controls">
+            <div class="group-selector">
+              <label for="group-select">部活動を選択</label>
+              <select
+                id="group-select"
+                bind:value={selectedGroupId}
+                on:change={() => {
+                  currentPage = 1;
+                }}
+              >
+                {#each groupSections as section (section.group.id)}
+                  <option value={section.group.id}>{section.group.name || fallbackGroupName}</option>
+                {/each}
+              </select>
+            </div>
+            <div class="group-selector sort-selector">
+              <label for="sort-select">並び順</label>
+              <select
+                id="sort-select"
+                bind:value={sortOrder}
+                on:change={() => {
+                  currentPage = 1;
+                }}
+              >
+                <option value="newest">新着順</option>
+                <option value="oldest">古い順</option>
+              </select>
+            </div>
+          </div>
+
+          {#if selectedGroupSection}
+            <section class="group-block" role="tabpanel">
               <header class="group-head">
                 <div>
-                  <h2>{section.group.name || fallbackGroupName}</h2>
-                  <p class="group-description">{section.group.description || '団体説明は未設定です。'}</p>
+                  <h2>{selectedGroupSection.group.name || fallbackGroupName}</h2>
+                  <p class="group-description">{selectedGroupSection.group.description || '団体説明は未設定です。'}</p>
                 </div>
                 <div class="group-meta">
-                  <p class="group-id">ID: {section.group.id}</p>
+                  <p class="group-id">ID: {selectedGroupSection.group.id}</p>
                   <p class="channel-line">
-                    {#if section.group.youtube.channelId}
-                      <a href={`https://www.youtube.com/channel/${section.group.youtube.channelId}`} target="_blank" rel="noreferrer">
-                        {section.group.youtube.channelTitle || 'YouTubeチャンネル'}
+                    {#if selectedGroupSection.group.youtube.channelId}
+                      <a href={`https://www.youtube.com/channel/${selectedGroupSection.group.youtube.channelId}`} target="_blank" rel="noreferrer">
+                        {selectedGroupSection.group.youtube.channelTitle || 'YouTubeチャンネル'}
                       </a>
-                    {:else if section.videos[0]?.youtubeChannelId}
-                      <a href={`https://www.youtube.com/channel/${section.videos[0].youtubeChannelId}`} target="_blank" rel="noreferrer">
-                        {section.videos[0].youtubeChannelTitle || 'YouTubeチャンネル'}
+                    {:else if selectedGroupSection.videos[0]?.youtubeChannelId}
+                      <a href={`https://www.youtube.com/channel/${selectedGroupSection.videos[0].youtubeChannelId}`} target="_blank" rel="noreferrer">
+                        {selectedGroupSection.videos[0].youtubeChannelTitle || 'YouTubeチャンネル'}
                       </a>
                     {:else}
                       YouTubeチャンネル未連携
                     {/if}
-                    <span class="chip" data-connected={section.group.youtube.connected ? 'true' : 'false'}>
-                      {section.group.youtube.connected ? 'connected' : 'not connected'}
+                    <span class="chip" data-connected={selectedGroupSection.group.youtube.connected ? 'true' : 'false'}>
+                      {selectedGroupSection.group.youtube.connected ? 'connected' : 'not connected'}
                     </span>
                   </p>
                 </div>
               </header>
 
-              {#if section.videos.length === 0}
+              {#if selectedGroupSection.videos.length === 0}
                 <p class="empty">公開中の動画はありません。</p>
               {:else}
                 <ul class="video-feed">
-                  {#each section.videos as video (video.id)}
+                  {#each paginatedVideos as video (video.id)}
                     <li class="video-card">
                       <div class="video-media">
                         {#if video.youtubeVideoId}
@@ -311,7 +364,7 @@ import { onMount } from 'svelte';
                         <p class="video-label">Campus Movie</p>
                         <h3>{video.title || 'タイトル未設定'}</h3>
                         <p class="video-meta">
-                          <span>{video.youtubeChannelTitle || section.group.name || 'チャンネル未設定'}</span>
+                          <span>{video.youtubeChannelTitle || selectedGroupSection.group.name || 'チャンネル未設定'}</span>
                           <span>{formatVideoDate(video.createdAt)}</span>
                         </p>
                         <p class="video-description">{video.description || '動画説明は未設定です。'}</p>
@@ -326,9 +379,28 @@ import { onMount } from 'svelte';
                     </li>
                   {/each}
                 </ul>
+                <nav class="pagination" aria-label="動画ページネーション">
+                  <button
+                    type="button"
+                    class="page-btn"
+                    on:click={() => (currentPage = Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    前へ
+                  </button>
+                  <span class="page-indicator">{currentPage} / {totalPages}</span>
+                  <button
+                    type="button"
+                    class="page-btn"
+                    on:click={() => (currentPage = Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    次へ
+                  </button>
+                </nav>
               {/if}
             </section>
-          {/each}
+          {/if}
         </div>
       {/if}
     {/if}
@@ -458,6 +530,41 @@ import { onMount } from 'svelte';
     gap: 20px;
   }
 
+  .group-selector {
+    display: grid;
+    gap: 6px;
+    max-width: 420px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: end;
+  }
+
+  .sort-selector {
+    max-width: 220px;
+  }
+
+  .group-selector label {
+    font-size: 0.78rem;
+    color: #d2e1ee;
+    font-weight: 700;
+  }
+
+  .group-selector select {
+    appearance: none;
+    width: 100%;
+    border: 1px solid rgba(106, 128, 146, 0.65);
+    background: rgba(24, 35, 48, 0.9);
+    color: #edf4fb;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
   .group-block {
     border-radius: 24px;
     border: 1px solid rgba(84, 106, 126, 0.46);
@@ -544,6 +651,37 @@ import { onMount } from 'svelte';
     padding: 0;
     display: grid;
     gap: 16px;
+  }
+
+  .pagination {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .page-btn {
+    border: 1px solid rgba(106, 128, 146, 0.55);
+    background: rgba(24, 35, 48, 0.88);
+    color: #d6e3ef;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .page-indicator {
+    font-size: 0.78rem;
+    color: #c3d3e3;
+    min-width: 64px;
+    text-align: center;
   }
 
   .video-card {
