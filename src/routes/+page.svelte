@@ -391,9 +391,8 @@ import { onMount } from 'svelte';
     margin: 0 auto;
     position: relative;
     z-index: 1;
-    transform: scale(var(--ui-scale));
-    transform-origin: top center;
     flex: 0 0 auto;
+    zoom: var(--ui-scale);
   }
 
   .hero {
