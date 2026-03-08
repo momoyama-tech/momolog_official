@@ -665,7 +665,7 @@ import { onMount } from 'svelte';
     border: 1px solid rgba(106, 128, 146, 0.55);
     background: rgba(24, 35, 48, 0.88);
     color: #d6e3ef;
-    border-radius: 999px;
+    border-radius: 998px;
     padding: 6px 12px;
     font-size: 0.78rem;
     font-weight: 700;
