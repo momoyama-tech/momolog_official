@@ -654,7 +654,7 @@ import { onMount } from 'svelte';
 
   @media (min-width: 880px) {
     .page-shell {
-      padding-top: 34px;
+      padding-top: 35px;
     }
 
     .hero {
