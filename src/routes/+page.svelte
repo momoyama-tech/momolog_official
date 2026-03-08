@@ -444,6 +444,8 @@ import { onMount } from 'svelte';
     color: #f3f7fc;
     font-family: 'Yu Gothic UI', 'Meiryo UI', sans-serif;
     background: #111722;
+    font-size: 18px;
+    line-height: 1.7;
   }
 
   .page-shell {
@@ -511,7 +513,7 @@ import { onMount } from 'svelte';
 
   .hero-kicker {
     margin: 0;
-    font-size: 0.72rem;
+    font-size: 1rem;
     letter-spacing: 0.18em;
     font-weight: 700;
     color: #efb3c6;
@@ -520,26 +522,28 @@ import { onMount } from 'svelte';
 
   h1 {
     margin: 10px 0 4px;
-    font-size: clamp(2.1rem, 5vw, 3.4rem);
-    line-height: 1.04;
+    font-size: clamp(3rem, 6.2vw, 4.6rem);
+    line-height: 1.12;
     letter-spacing: 0.01em;
     color: #f5f8fc;
   }
 
   .hero-sub {
     margin: 0;
-    font-size: 0.92rem;
+    font-size: 1.2rem;
     color: #b7c7d9;
   }
 
   .notice {
     margin: 0;
     border-radius: 14px;
-    padding: 12px 14px;
+    padding: 13px 15px;
     background: rgba(30, 41, 57, 0.9);
     border: 1px solid rgba(89, 111, 132, 0.46);
     color: #e4edf7;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+    font-size: 1.1rem;
+    line-height: 1.7;
   }
 
   .notice.is-error {
@@ -579,7 +583,7 @@ import { onMount } from 'svelte';
   }
 
   .group-selector label {
-    font-size: 0.78rem;
+    font-size: 1rem;
     color: #d2e1ee;
     font-weight: 700;
   }
@@ -591,8 +595,9 @@ import { onMount } from 'svelte';
     background: rgba(24, 35, 48, 0.9);
     color: #edf4fb;
     border-radius: 12px;
-    padding: 10px 12px;
-    font-size: 0.88rem;
+    padding: 12px 14px;
+    min-height: 48px;
+    font-size: 1.12rem;
     font-weight: 700;
   }
 
@@ -617,14 +622,15 @@ import { onMount } from 'svelte';
 
   h2 {
     margin: 0;
-    font-size: 1.35rem;
+    font-size: 1.95rem;
     color: #f3f7fc;
     letter-spacing: 0.01em;
   }
 
   .group-description {
     margin: 8px 0 0;
-    font-size: 0.89rem;
+    font-size: 1.14rem;
+    line-height: 1.75;
     color: #d2deea;
     white-space: pre-wrap;
   }
@@ -636,7 +642,7 @@ import { onMount } from 'svelte';
 
   .group-id {
     margin: 0;
-    font-size: 0.76rem;
+    font-size: 1rem;
     color: #b1c4d5;
     font-weight: 700;
   }
@@ -649,6 +655,7 @@ import { onMount } from 'svelte';
     flex-wrap: wrap;
     justify-content: flex-end;
     color: #d5e4f2;
+    font-size: 1.08rem;
   }
 
   .channel-line a {
@@ -658,8 +665,8 @@ import { onMount } from 'svelte';
 
   .chip {
     border-radius: 999px;
-    padding: 3px 8px;
-    font-size: 0.72rem;
+    padding: 5px 10px;
+    font-size: 0.94rem;
     color: #cbd8e4;
     background: rgba(96, 117, 133, 0.35);
     text-transform: lowercase;
@@ -673,7 +680,7 @@ import { onMount } from 'svelte';
   .empty {
     margin: 12px 0 0;
     color: #bdcede;
-    font-size: 0.88rem;
+    font-size: 1.1rem;
   }
 
   .video-feed {
@@ -697,8 +704,9 @@ import { onMount } from 'svelte';
     background: rgba(24, 35, 48, 0.88);
     color: #d6e3ef;
     border-radius: 998px;
-    padding: 6px 12px;
-    font-size: 0.78rem;
+    padding: 10px 16px;
+    min-height: 44px;
+    font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
   }
@@ -709,7 +717,7 @@ import { onMount } from 'svelte';
   }
 
   .page-indicator {
-    font-size: 0.78rem;
+    font-size: 1rem;
     color: #c3d3e3;
     min-width: 64px;
     text-align: center;
@@ -755,7 +763,7 @@ import { onMount } from 'svelte';
 
   .video-label {
     margin: 0 0 6px;
-    font-size: 0.7rem;
+    font-size: 0.94rem;
     color: #efb3c6;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -765,8 +773,8 @@ import { onMount } from 'svelte';
   h3 {
     margin: 0;
     color: #f4f8fc;
-    font-size: 1.25rem;
-    line-height: 1.35;
+    font-size: 1.75rem;
+    line-height: 1.45;
   }
 
   .video-meta {
@@ -775,13 +783,13 @@ import { onMount } from 'svelte';
     flex-wrap: wrap;
     gap: 10px;
     color: #c1d4e4;
-    font-size: 0.82rem;
+    font-size: 1.08rem;
   }
 
   .video-description {
     margin: 10px 0 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: 1.18rem;
+    line-height: 1.75;
     color: #dae5f0;
     white-space: pre-wrap;
     display: -webkit-box;
@@ -803,8 +811,9 @@ import { onMount } from 'svelte';
     display: inline-block;
     text-decoration: none;
     border-radius: 999px;
-    padding: 9px 15px;
-    font-size: 0.8rem;
+    padding: 11px 18px;
+    min-height: 44px;
+    font-size: 1.06rem;
     font-weight: 700;
     color: #fff7fb;
     background: linear-gradient(90deg, #a72b59, #cb4b74);
@@ -821,7 +830,7 @@ import { onMount } from 'svelte';
     border-radius: 999px;
     border: 1px solid rgba(98, 122, 141, 0.52);
     padding: 5px 10px;
-    font-size: 0.72rem;
+    font-size: 0.96rem;
     color: #d2e1ee;
     text-transform: uppercase;
     letter-spacing: 0.05em;
