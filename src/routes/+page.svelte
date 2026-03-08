@@ -585,7 +585,7 @@ import { onMount } from 'svelte';
   .group-selector label {
     font-size: 1rem;
     color: #d2e1ee;
-    font-weight: 700;
+    font-weight: 701;
   }
 
   .group-selector select {
