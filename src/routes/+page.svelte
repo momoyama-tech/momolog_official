@@ -66,6 +66,18 @@ import { onMount } from 'svelte';
     return a.title.localeCompare(b.title, 'ja');
   };
 
+  const formatVideoDate = (value: unknown): string => {
+    const millis = normalizeTimestamp(value);
+    if (!millis) return '公開日時未設定';
+    return new Date(millis).toLocaleString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const normalizeKey = (value: string): string => value.normalize('NFKC').trim().toLocaleLowerCase('ja-JP');
 
   $: effectiveGroups = (() => {
@@ -219,96 +231,105 @@ import { onMount } from 'svelte';
   <meta name="description" content="momolog official の団体別動画一覧" />
 </svelte:head>
 
-<div class="page-bg">
-  <div class="wave wave-top" aria-hidden="true"></div>
-  <div class="wave wave-bottom" aria-hidden="true"></div>
+<div class="page-shell">
+  <div class="ambient ambient-left" aria-hidden="true"></div>
+  <div class="ambient ambient-right" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
 
-  <main class="stage">
-    <section class="hero-panel">
-      <p class="eyebrow">MOMOLOG OFFICIAL</p>
-      <h1>団体別動画一覧</h1>
-      <p class="collection-name">Firestore: /groups + /videos (status = published)</p>
+  <main class="container">
+    <section class="hero">
+      <p class="hero-kicker">MOMOLOG OFFICIAL</p>
+      <h1>団体別動画アーカイブ</h1>
+      <p class="hero-sub">旬の動画を、団体ごとに。</p>
     </section>
 
     {#if loading}
-      <p class="message-card">団体と動画を読み込み中です...</p>
+      <p class="notice">団体と動画を読み込み中です...</p>
     {:else}
       {#if error}
-        <p class="message-card is-error">{error}</p>
+        <p class="notice is-error">{error}</p>
         {#if debugInfo}
-          <p class="message-card is-error debug">{debugInfo}</p>
+          <p class="notice is-error is-debug">{debugInfo}</p>
         {/if}
       {/if}
-      {#if groupSections.length === 0}
-        <p class="message-card">現在、公開中の団体・動画はありません。（groups: {groups.length} / videos: {videos.length}）</p>
-      {:else}
-      <div class="group-sections">
-        {#each groupSections as section (section.group.id)}
-          <section class="group-card">
-            <div class="card-cap"></div>
-            <h2>{section.group.name || fallbackGroupName}</h2>
-            <p class="group-id">ID: {section.group.id}</p>
-            <p class="group-description">{section.group.description || '団体説明は未設定です。'}</p>
-            <p class="channel">
-              {#if section.group.youtube.channelId}
-                <a
-                  href={`https://www.youtube.com/channel/${section.group.youtube.channelId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {section.group.youtube.channelTitle || 'YouTubeチャンネル'}
-                </a>
-              {:else if section.videos[0]?.youtubeChannelId}
-                <a
-                  href={`https://www.youtube.com/channel/${section.videos[0].youtubeChannelId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {section.videos[0].youtubeChannelTitle || 'YouTubeチャンネル'}
-                </a>
-              {:else}
-                YouTubeチャンネル未連携
-              {/if}
-              <span class="channel-status" data-connected={section.group.youtube.connected ? 'true' : 'false'}>
-                {section.group.youtube.connected ? 'connected' : 'not connected'}
-              </span>
-            </p>
 
-            {#if section.videos.length === 0}
-              <p class="empty-text">公開中の動画はありません。</p>
-            {:else}
-              <ul class="video-list">
-                {#each section.videos as video (video.id)}
-                  <li class="video-item">
-                    <div class="video-media">
-                      {#if video.youtubeVideoId}
-                        <iframe
-                          title={video.title}
-                          src={`https://www.youtube.com/embed/${video.youtubeVideoId}`}
-                          loading="lazy"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowfullscreen
-                        ></iframe>
-                      {:else if video.youtubeThumbnailUrl}
-                        <img src={video.youtubeThumbnailUrl} alt={video.title} loading="lazy" />
-                      {:else}
-                        <div class="media-placeholder">サムネイルなし</div>
-                      {/if}
-                    </div>
-                    <div class="video-info">
-                      <h3>{video.title || 'タイトル未設定'}</h3>
-                      <p>{video.description || '動画説明は未設定です。'}</p>
-                      {#if video.youtubeUrl}
-                        <a href={video.youtubeUrl} target="_blank" rel="noreferrer">YouTubeで開く</a>
-                      {/if}
-                    </div>
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-          </section>
-        {/each}
-      </div>
+      {#if groupSections.length === 0}
+        <p class="notice">現在、公開中の団体・動画はありません。（groups: {groups.length} / videos: {videos.length}）</p>
+      {:else}
+        <div class="group-stack">
+          {#each groupSections as section (section.group.id)}
+            <section class="group-block">
+              <header class="group-head">
+                <div>
+                  <h2>{section.group.name || fallbackGroupName}</h2>
+                  <p class="group-description">{section.group.description || '団体説明は未設定です。'}</p>
+                </div>
+                <div class="group-meta">
+                  <p class="group-id">ID: {section.group.id}</p>
+                  <p class="channel-line">
+                    {#if section.group.youtube.channelId}
+                      <a href={`https://www.youtube.com/channel/${section.group.youtube.channelId}`} target="_blank" rel="noreferrer">
+                        {section.group.youtube.channelTitle || 'YouTubeチャンネル'}
+                      </a>
+                    {:else if section.videos[0]?.youtubeChannelId}
+                      <a href={`https://www.youtube.com/channel/${section.videos[0].youtubeChannelId}`} target="_blank" rel="noreferrer">
+                        {section.videos[0].youtubeChannelTitle || 'YouTubeチャンネル'}
+                      </a>
+                    {:else}
+                      YouTubeチャンネル未連携
+                    {/if}
+                    <span class="chip" data-connected={section.group.youtube.connected ? 'true' : 'false'}>
+                      {section.group.youtube.connected ? 'connected' : 'not connected'}
+                    </span>
+                  </p>
+                </div>
+              </header>
+
+              {#if section.videos.length === 0}
+                <p class="empty">公開中の動画はありません。</p>
+              {:else}
+                <ul class="video-feed">
+                  {#each section.videos as video (video.id)}
+                    <li class="video-card">
+                      <div class="video-media">
+                        {#if video.youtubeVideoId}
+                          <iframe
+                            title={video.title}
+                            src={`https://www.youtube.com/embed/${video.youtubeVideoId}`}
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                          ></iframe>
+                        {:else if video.youtubeThumbnailUrl}
+                          <img src={video.youtubeThumbnailUrl} alt={video.title} loading="lazy" />
+                        {:else}
+                          <div class="media-placeholder">サムネイルなし</div>
+                        {/if}
+                      </div>
+
+                      <div class="video-body">
+                        <p class="video-label">Campus Movie</p>
+                        <h3>{video.title || 'タイトル未設定'}</h3>
+                        <p class="video-meta">
+                          <span>{video.youtubeChannelTitle || section.group.name || 'チャンネル未設定'}</span>
+                          <span>{formatVideoDate(video.createdAt)}</span>
+                        </p>
+                        <p class="video-description">{video.description || '動画説明は未設定です。'}</p>
+
+                        <div class="video-actions">
+                          {#if video.youtubeUrl}
+                            <a class="btn" href={video.youtubeUrl} target="_blank" rel="noreferrer">YouTubeで視聴</a>
+                          {/if}
+                          <span class="status">{video.status}</span>
+                        </div>
+                      </div>
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+            </section>
+          {/each}
+        </div>
       {/if}
     {/if}
   </main>
@@ -317,204 +338,223 @@ import { onMount } from 'svelte';
 <style>
   :global(body) {
     margin: 0;
+    color: #f3f7fc;
     font-family: 'Yu Gothic UI', 'Meiryo UI', sans-serif;
+    background: #111722;
   }
 
-  .page-bg {
-    min-height: 100vh;
-    padding: 32px 16px 64px;
+  .page-shell {
     position: relative;
+    min-height: 100vh;
+    padding: 24px 14px 80px;
     overflow: hidden;
-    background:
-      radial-gradient(circle at 10% 12%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 34%),
-      radial-gradient(circle at 90% 18%, rgba(209, 246, 255, 0.72) 0%, rgba(255, 255, 255, 0) 36%),
-      linear-gradient(160deg, #e8f8ff 0%, #f2fff9 48%, #f4f7ff 100%);
+    background: linear-gradient(150deg, #111722 0%, #1a2436 54%, #111926 100%);
   }
 
-  .wave {
+  .ambient {
     position: absolute;
-    left: -6%;
-    width: 112%;
-    height: 220px;
+    width: 520px;
+    height: 520px;
     border-radius: 50%;
+    filter: blur(46px);
+    opacity: 0.42;
     pointer-events: none;
-    opacity: 0.45;
-    filter: blur(1px);
   }
 
-  .wave-top {
+  .ambient-left {
+    left: -180px;
     top: -140px;
-    background: linear-gradient(90deg, rgba(132, 215, 255, 0.5), rgba(130, 241, 214, 0.45));
+    background: radial-gradient(circle, rgba(173, 37, 90, 0.74), rgba(173, 37, 90, 0));
   }
 
-  .wave-bottom {
-    bottom: -150px;
-    background: linear-gradient(90deg, rgba(130, 241, 214, 0.4), rgba(175, 210, 255, 0.45));
+  .ambient-right {
+    right: -180px;
+    top: 120px;
+    background: radial-gradient(circle, rgba(44, 75, 116, 0.78), rgba(44, 75, 116, 0));
   }
 
-  .stage {
-    max-width: 1080px;
+  .noise {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.14;
+    background-image: linear-gradient(transparent 96%, rgba(255, 255, 255, 0.08) 100%);
+    background-size: 100% 4px;
+  }
+
+  .container {
+    max-width: 1260px;
     margin: 0 auto;
     position: relative;
     z-index: 1;
   }
 
-  .hero-panel {
-    border-radius: 22px;
-    padding: 24px 18px;
-    margin-bottom: 18px;
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(151, 225, 237, 0.9);
-    box-shadow:
-      0 18px 38px rgba(37, 106, 150, 0.14),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(5px);
+  .hero {
+    padding: 28px 22px;
+    border-radius: 24px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(189, 62, 105, 0.42);
+    background:
+      linear-gradient(130deg, rgba(26, 36, 53, 0.94), rgba(22, 31, 46, 0.92)),
+      linear-gradient(180deg, rgba(189, 62, 105, 0.2), rgba(189, 62, 105, 0));
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
   }
 
-  .eyebrow {
+  .hero-kicker {
     margin: 0;
     font-size: 0.72rem;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.18em;
     font-weight: 700;
-    color: #2c7ea5;
+    color: #efb3c6;
+    text-transform: uppercase;
   }
 
   h1 {
-    margin: 10px 0 6px;
-    font-size: clamp(2rem, 4vw, 3.1rem);
-    line-height: 1.06;
-    color: #1f5e83;
+    margin: 10px 0 4px;
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    line-height: 1.04;
     letter-spacing: 0.01em;
+    color: #f5f8fc;
   }
 
-  .collection-name {
+  .hero-sub {
     margin: 0;
-    color: #3d708f;
-    font-size: 0.86rem;
-    font-weight: 700;
+    font-size: 0.92rem;
+    color: #b7c7d9;
   }
 
-  .message-card {
+  .notice {
     margin: 0;
     border-radius: 14px;
-    border: 1px solid #97dceb;
-    background: rgba(255, 255, 255, 0.92);
-    color: #35586e;
-    font-size: 0.92rem;
-    padding: 13px 14px;
-    box-shadow: 0 10px 24px rgba(52, 113, 141, 0.12);
+    padding: 12px 14px;
+    background: rgba(30, 41, 57, 0.9);
+    border: 1px solid rgba(89, 111, 132, 0.46);
+    color: #e4edf7;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
   }
 
-  .message-card.is-error {
-    border-color: #f4a7b1;
-    color: #8e2f40;
-    background: rgba(255, 245, 246, 0.95);
+  .notice.is-error {
+    border-color: rgba(230, 106, 140, 0.66);
+    background: rgba(57, 19, 33, 0.92);
+    color: #ffd7e2;
   }
 
-  .message-card.debug {
+  .notice.is-debug {
     margin-top: 8px;
     font-size: 0.8rem;
     white-space: pre-wrap;
     word-break: break-word;
   }
 
-  .group-sections {
+  .group-stack {
+    margin-top: 14px;
     display: grid;
-    gap: 16px;
+    gap: 20px;
   }
 
-  .group-card {
-    border-radius: 16px;
-    border: 1px solid #9fdde8;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 14px 14px 16px;
-    box-shadow:
-      0 12px 26px rgba(45, 112, 148, 0.12),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  .group-block {
+    border-radius: 24px;
+    border: 1px solid rgba(84, 106, 126, 0.46);
+    background:
+      linear-gradient(180deg, rgba(27, 38, 55, 0.92) 0%, rgba(20, 30, 43, 0.95) 100%),
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03) 10px, rgba(255, 255, 255, 0.01) 10px, rgba(255, 255, 255, 0.01) 20px);
+    padding: 18px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.34);
   }
 
-  .card-cap {
-    height: 6px;
-    border-radius: 999px;
-    margin-bottom: 10px;
-    background: linear-gradient(90deg, #86d2ff 0%, #7fe9c4 100%);
+  .group-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(83, 104, 121, 0.45);
+    padding-bottom: 12px;
   }
 
   h2 {
     margin: 0;
-    color: #1f6288;
-    font-size: 1.25rem;
-  }
-
-  .group-id {
-    margin: 6px 0 0;
-    color: #47708a;
-    font-size: 0.78rem;
-    font-weight: 700;
+    font-size: 1.35rem;
+    color: #f3f7fc;
+    letter-spacing: 0.01em;
   }
 
   .group-description {
     margin: 8px 0 0;
-    color: #3a5465;
-    font-size: 0.9rem;
-    line-height: 1.45;
+    font-size: 0.89rem;
+    color: #d2deea;
     white-space: pre-wrap;
   }
 
-  .channel {
+  .group-meta {
+    text-align: right;
+    min-width: 280px;
+  }
+
+  .group-id {
+    margin: 0;
+    font-size: 0.76rem;
+    color: #b1c4d5;
+    font-weight: 700;
+  }
+
+  .channel-line {
     margin: 8px 0 0;
-    color: #345b74;
-    font-size: 0.85rem;
-    display: flex;
+    display: inline-flex;
     gap: 8px;
-    flex-wrap: wrap;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    color: #d5e4f2;
   }
 
-  .channel a {
-    color: #246b8f;
+  .channel-line a {
+    color: #f2b4c8;
     font-weight: 700;
   }
 
-  .channel-status {
+  .chip {
     border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 0.74rem;
-    font-weight: 700;
-    background: rgba(160, 198, 219, 0.2);
-    color: #4d6174;
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    color: #cbd8e4;
+    background: rgba(96, 117, 133, 0.35);
+    text-transform: lowercase;
   }
 
-  .channel-status[data-connected='true'] {
-    background: rgba(121, 227, 190, 0.25);
-    color: #166a56;
+  .chip[data-connected='true'] {
+    color: #e0fbef;
+    background: rgba(121, 175, 151, 0.34);
   }
 
-  .empty-text {
+  .empty {
     margin: 12px 0 0;
-    color: #4d6b7f;
+    color: #bdcede;
     font-size: 0.88rem;
   }
 
-  .video-list {
+  .video-feed {
     list-style: none;
-    margin: 12px 0 0;
+    margin: 14px 0 0;
     padding: 0;
     display: grid;
-    gap: 12px;
+    gap: 16px;
   }
 
-  .video-item {
-    border-top: 1px solid rgba(134, 210, 255, 0.35);
-    padding-top: 12px;
+  .video-card {
+    width: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(82, 104, 123, 0.47);
+    background: rgba(18, 27, 40, 0.88);
     display: grid;
-    gap: 10px;
+    gap: 12px;
+    padding: 12px;
   }
 
   .video-media {
     border-radius: 12px;
     overflow: hidden;
-    background: #eaf4fa;
+    border: 1px solid rgba(85, 108, 127, 0.5);
+    background: #0f1724;
   }
 
   .video-media iframe,
@@ -522,51 +562,116 @@ import { onMount } from 'svelte';
   .media-placeholder {
     width: 100%;
     aspect-ratio: 16 / 9;
-    border: 0;
+    min-height: 280px;
     display: block;
+    border: 0;
   }
 
   .media-placeholder {
     display: grid;
     place-items: center;
-    color: #6a8397;
-    font-size: 0.84rem;
-  }
-
-  .video-info h3 {
-    margin: 0;
-    color: #1f5e83;
-    font-size: 1rem;
-  }
-
-  .video-info p {
-    margin: 6px 0 0;
-    color: #3a5465;
+    color: #bdd0e3;
     font-size: 0.86rem;
-    line-height: 1.45;
-    white-space: pre-wrap;
   }
 
-  .video-info a {
-    display: inline-block;
-    margin-top: 8px;
-    color: #206f95;
+  .video-body {
+    padding: 4px 2px 2px;
+  }
+
+  .video-label {
+    margin: 0 0 6px;
+    font-size: 0.7rem;
+    color: #efb3c6;
     font-weight: 700;
-    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
-  @media (min-width: 720px) {
-    .page-bg {
-      padding-top: 42px;
+  h3 {
+    margin: 0;
+    color: #f4f8fc;
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .video-meta {
+    margin: 8px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #c1d4e4;
+    font-size: 0.82rem;
+  }
+
+  .video-description {
+    margin: 10px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #dae5f0;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .video-actions {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .btn {
+    display: inline-block;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 9px 15px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff7fb;
+    background: linear-gradient(90deg, #a72b59, #cb4b74);
+    box-shadow: 0 10px 18px rgba(167, 43, 89, 0.36);
+    transition: transform 0.18s ease, filter 0.18s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+
+  .status {
+    border-radius: 999px;
+    border: 1px solid rgba(98, 122, 141, 0.52);
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    color: #d2e1ee;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  @media (min-width: 880px) {
+    .page-shell {
+      padding-top: 34px;
     }
 
-    .hero-panel {
-      padding: 30px 24px;
+    .hero {
+      padding: 34px 28px;
     }
 
-    .video-item {
-      grid-template-columns: minmax(240px, 330px) 1fr;
+    .video-card {
+      grid-template-columns: minmax(440px, 58%) 1fr;
       align-items: start;
+      gap: 16px;
+      padding: 14px;
+    }
+
+    .video-media iframe,
+    .video-media img,
+    .media-placeholder {
+      min-height: 320px;
     }
   }
 </style>
