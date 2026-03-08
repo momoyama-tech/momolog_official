@@ -383,10 +383,15 @@ import { onMount } from 'svelte';
   }
 
   .container {
+    --ui-scale: 0.65;
     max-width: 1260px;
     margin: 0 auto;
     position: relative;
     z-index: 1;
+    transform: scale(var(--ui-scale));
+    transform-origin: top center;
+    width: calc(100% / var(--ui-scale));
+    max-width: calc(1260px / var(--ui-scale));
   }
 
   .hero {
